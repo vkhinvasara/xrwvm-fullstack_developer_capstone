@@ -14,6 +14,7 @@ import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .populate import initiate
+from django.contrib.auth import logout
 
 
 # Get an instance of a logger
@@ -23,6 +24,18 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 # Create a `login_request` view to handle sign in request
+
+# Create a `logout_request` view to handle sign out request
+@csrf_exempt
+def logout_user(request):
+    if request.method == 'POST':
+        logout(request)
+        data = {"userName": ""}
+        return JsonResponse(data)
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
+
+
 @csrf_exempt
 def login_user(request):
     # Get username and password from request.POST dictionary
@@ -38,6 +51,25 @@ def login_user(request):
         data = {"userName": username, "status": "Authenticated"}
     return JsonResponse(data)
 
+@csrf_exempt
+def register_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data['userName']
+        password = data['password']
+        first_name = data['firstName']
+        last_name = data['lastName']
+        email = data['email']
+
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"error": "Already Registered"}, status=400)
+
+        user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name, email=email)
+        user.save()
+        login(request, user)
+        return JsonResponse({"userName": username, "status": "Registered"})
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
 # ...
