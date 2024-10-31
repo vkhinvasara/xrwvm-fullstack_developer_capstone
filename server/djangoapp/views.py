@@ -70,6 +70,25 @@ def register_user(request):
         return JsonResponse({"userName": username, "status": "Registered"})
     else:
         return JsonResponse({"error": "Invalid request method"}, status=400)
+
+@csrf_exempt
+def get_cars(request):
+    if request.method == 'GET':
+        car_makes = CarMake.objects.all()
+        cars_data = []
+        for make in car_makes:
+            models = CarModel.objects.filter(car_make=make)
+            for model in models:
+                cars_data.append({
+                    "make": make.name,
+                    "model": model.name,
+                    "type": model.type,
+                    "year": model.year.year,
+                    "dealer_id": model.dealer_id
+                })
+        return JsonResponse(cars_data, safe=False)
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
 # Create a `logout_request` view to handle sign out request
 # def logout_request(request):
 # ...
